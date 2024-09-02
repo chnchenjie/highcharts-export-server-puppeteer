@@ -10,6 +10,10 @@ docker run -d -p 8080:8080/tcp \
     --name highcharts-export-server-v4 \
     chnchenjie/highcharts-export-server-v4
 ```
+or
+```
+docker-compose up --build
+```
 
 # [Dockerfile](https://github.com/highcharts/node-export-server/issues/527#issuecomment-2288880160)
 ```

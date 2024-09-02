@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  highcharts-export-server:
+    build: .
+    image: chnchenjie/highcharts-export-server-v4
+    ports:
+      - "8080:8080"
+    cap_add:
+      - SYS_ADMIN
+    entrypoint: ["highcharts-export-server", "--enableServer", "1", "--port", "8080"]
