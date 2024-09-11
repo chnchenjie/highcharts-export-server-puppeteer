@@ -3,11 +3,18 @@ name: Build and Push Docker Image
 on:
   push:
     branches:
-      - main  # 当推送到 main 分支时触发
+      - master  # 当推送到 master 分支时触发
+      - dev/*  # 当推送到 dev/* 分支时触发
+    tags:
+      - v*  # 当创建 v* 标签时触发
   pull_request:
     branches:
-      - main  # 当创建针对 main 分支的拉取请求时触发
+      - master  # 当创建针对 master 分支的拉取请求时触发
   workflow_dispatch:  # 手动触发
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}  # 使用 GitHub 仓库名作为镜像名
 
 jobs:
   build:
@@ -26,10 +33,30 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}  # 使用 GitHub Secrets 中的 Docker 用户名
         password: ${{ secrets.DOCKER_PASSWORD }}  # 使用 GitHub Secrets 中的 Docker 密码
 
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v2  # 登录到 GitHub Container Registry
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}  # 使用 GitHub 用户名
+        password: ${{ secrets.GITHUB_TOKEN }}  # 使用 GitHub Token
+
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@v4  # 使用 docker/metadata-action 提取元数据
+      with:
+        images: |
+          ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=raw,value=latest,enable={{is_default_branch}}
+          type=ref,event=tag
+          type=ref,event=branch
+
     - name: Build and push Docker image
       uses: docker/build-push-action@v4  # 构建并推送 Docker 镜像
       with:
         context: .  # 上下文目录为当前目录
         file: ./Dockerfile  # 使用当前目录下的 Dockerfile
         push: true  # 构建完成后推送镜像
-        tags: chnchenjie/highcharts-export-server-v4:latest  # 镜像标签
+        tags: ${{ steps.meta.outputs.tags }}  # 使用 metadata-action 生成的标签
+        labels: ${{ steps.meta.outputs.labels }}  # 使用 metadata-action 生成的标签
