@@ -1,0 +1,35 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main  # 当推送到 main 分支时触发
+  pull_request:
+    branches:
+      - main  # 当创建针对 main 分支的拉取请求时触发
+  workflow_dispatch:  # 手动触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # 使用最新的 Ubuntu 运行器
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3  # 检出代码仓库
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2  # 设置 Docker Buildx
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2  # 登录到 Docker Hub
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}  # 使用 GitHub Secrets 中的 Docker 用户名
+        password: ${{ secrets.DOCKER_PASSWORD }}  # 使用 GitHub Secrets 中的 Docker 密码
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4  # 构建并推送 Docker 镜像
+      with:
+        context: .  # 上下文目录为当前目录
+        file: ./Dockerfile  # 使用当前目录下的 Dockerfile
+        push: true  # 构建完成后推送镜像
+        tags: chnchenjie/highcharts-export-server-v4:latest  # 镜像标签
